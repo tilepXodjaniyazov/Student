@@ -57,7 +57,7 @@ public class StudentController {
 
     //3. FACULTY DEKANAT
     @GetMapping("/FacultyDekan/{id}")
-    public Page<Student> getFaculty(@PathVariable Integer id,@RequestParam int page) {
+    public Page<Student> getFaculty(@PathVariable Integer id, @RequestParam int page) {
         Pageable pageable = PageRequest.of(page, 10);
         Page<Student> studentPage = studentRepository.findAllByGroup_FacultyId(id, pageable);
         return studentPage;
@@ -65,7 +65,7 @@ public class StudentController {
 
     //4. GROUP OWNER
     @GetMapping("/group/{id}")
-    public Page<Student> getGrpup(@PathVariable Integer id,@RequestParam int page) {
+    public Page<Student> getGrpup(@PathVariable Integer id, @RequestParam int page) {
         Pageable pageable = PageRequest.of(page, 10);
         Page<Student> studentPage = studentRepository.findAllByGroupId(id, pageable);
         return studentPage;
@@ -106,5 +106,47 @@ public class StudentController {
         return null;
     }
 
+    @PutMapping("/student/{id}")
+    public String update(@PathVariable Integer id, @RequestBody StudentDto studentDto) {
+        Optional<Student> byId = studentRepository.findById(id);
+        if (byId.isPresent()) {
+            Student student = byId.get();
+            student.setFirstName(studentDto.getFirstName());
+            student.setLastName(studentDto.getLastName());
+
+            Address address = new Address();
+            address.setCity(studentDto.getCity());
+            address.setDistrict(studentDto.getDistrict());
+            address.setStreet(studentDto.getStreet());
+
+            student.setAddress(address);
+
+            if (!byId.isPresent()) {
+                return "Groupa yoq";
+            }
+            Group group = student.getGroup();
+            student.setGroup(group);
+            List<Subject> subjectList = new ArrayList<>();
+            List<Integer> subjectListDto = studentDto.getSubjectList();
+
+            for (Integer i : subjectListDto) {
+                Optional<Subject> optionalSubject = subjectRepository.findById(i);
+                if (optionalSubject.isPresent()) {
+                    Subject subject = optionalSubject.get();
+                    subjectList.add(subject);
+                } else {
+                    return "subject topilmadi";
+                }
+            }
+            student.setSubjects(subjectList);
+        }
+        return "false";
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public String deleteStudent(@PathVariable Integer id) {
+        studentRepository.deleteById(id);
+        return "true";
+    }
 
 }
